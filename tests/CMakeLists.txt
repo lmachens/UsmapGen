@@ -13,6 +13,11 @@ target_link_libraries(usmapgen-api-tests PRIVATE UsmapGen::UsmapGen)
 target_compile_options(usmapgen-api-tests PRIVATE -Wall -Wextra -fno-exceptions -fno-rtti)
 add_test(NAME api-compatibility COMMAND usmapgen-api-tests)
 
+add_executable(usmapgen-deferred-tests Deferred.cpp)
+target_link_libraries(usmapgen-deferred-tests PRIVATE UsmapGen::UsmapGen)
+target_compile_options(usmapgen-deferred-tests PRIVATE -Wall -Wextra -fno-exceptions -fno-rtti)
+add_test(NAME deferred-registration COMMAND usmapgen-deferred-tests)
+
 if(USMAPGEN_BUILD_TOOLS)
     add_test(NAME command-line COMMAND ${CMAKE_COMMAND}
         "-DUSMAPGEN=$<TARGET_FILE:usmapgen>"
