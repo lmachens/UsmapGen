@@ -15,11 +15,11 @@ constexpr std::uint32_t noSlot = 0;
 constexpr std::uint32_t peSignature = 0x4550;
 constexpr std::uint16_t machineAmd64 = 0x8664;
 constexpr std::uint16_t optionalHeaderPe32Plus = 0x20B;
-constexpr std::uint32_t resourceDirectory = 2;
-constexpr std::uint32_t maxResourceSize = 16 * 1024 * 1024;
 constexpr std::uint32_t sectionInitializedData = 0x40;
 constexpr std::uint32_t sectionExecute = 0x20000000;
 constexpr std::uint32_t sectionWrite = 0x80000000;
+constexpr std::uint32_t resourceDirectory = 2;
+constexpr std::uint32_t maxResourceSize = 16 * 1024 * 1024;
 constexpr std::uint32_t exceptionDirectory = 3;
 constexpr std::uint32_t relocationDirectory = 5;
 constexpr std::uint16_t relocationDir64 = 10;
@@ -137,7 +137,7 @@ std::expected<void, Error> Image::open() {
         return std::unexpected(Error{"The executable lacks a code, read-only data or writable data section."});
     //! A packer leaves a section without file data and fills it when the executable starts.
     if (code.fileSize == 0 || readOnlyData.fileSize == 0)
-        return std::unexpected(Error{"The executable is packed: its .text or .rdata section has no data in the file. A memory dump of the running executable has it."});
+        return std::unexpected(Error{"The executable is packed: its code or read-only data section has no data in the file. A memory dump of the running executable has it."});
     if (functionCount == 0)
         return std::unexpected(Error{"The executable has no exception directory."});
     return {};

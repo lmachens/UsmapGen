@@ -10,18 +10,9 @@
 #include "UsmapGen/Code.h"
 #include "UsmapGen/Enum.h"
 #include "UsmapGen/Layout.h"
+#include "UsmapGen/Name.h"
 
 namespace UsmapGen {
-
-std::string_view shortEnumName(std::string_view full, NameCasing nameCasing) {
-    //! FName interns the whole literal; only a bare None reuses the reserved spelling in a non-preserving pool.
-    if (nameCasing == NameCasing::NonPreserving && full.size() == 4 &&
-        (full[0] == 'n' || full[0] == 'N') && (full[1] == 'o' || full[1] == 'O') &&
-        (full[2] == 'n' || full[2] == 'N') && (full[3] == 'e' || full[3] == 'E'))
-        return "None";
-    const std::size_t separator = full.rfind("::");
-    return separator == std::string_view::npos ? full : full.substr(separator + 2);
-}
 
 namespace {
 
@@ -169,6 +160,12 @@ std::optional<PropertyType> usmapTypeOf(Kind kind) {
     }
 }
 
+//! The FName of a scoped enumerator keeps its scope, so only a bare one can match a hardcoded name.
+std::string_view shortEnumName(std::string_view full) {
+    const std::size_t separator = full.rfind("::");
+    return separator == std::string_view::npos ? runtimeEnumName(full) : full.substr(separator + 2);
+}
+
 //! UEnum::GenerateEnumPrefix: the longest common prefix of the names, cut before its last underscore.
 std::string enumPrefixOf(std::span<const EnumName> names, std::string_view enumName) {
     std::string prefix;
@@ -209,7 +206,7 @@ private:
 
 class Reflection {
 public:
-    Reflection(Image& image, NameCasing nameCasing) : image(image), code(image), nameCasing(nameCasing) {}
+    explicit Reflection(Image& image) : image(image), code(image) {}
 
     std::expected<Schema, Error> read();
 
@@ -266,7 +263,6 @@ private:
 
     Image& image;
     Code code;
-    NameCasing nameCasing;
     Schema schema;
 
     bool engine5 = false;
@@ -1299,7 +1295,7 @@ void Reflection::readEnum(const TypeRecord& record) {
     Enum entry{.name = name, .firstValue = std::uint32_t(schema.enumValues.size()), .valueCount = std::uint16_t(enumerators.size())};
     for (const EnumName& enumerator : enumerators) {
         usedEnumNames.insert(toLower(scope + enumerator.full));
-        schema.enumValues.push_back({enumerator.value, schema.names.add(shortEnumName(enumerator.full, nameCasing))});
+        schema.enumValues.push_back({enumerator.value, schema.names.add(shortEnumName(enumerator.full))});
     }
     schema.enums.push_back(entry);
 }
@@ -1359,8 +1355,8 @@ std::expected<Schema, Error> Reflection::read() {
 
 }
 
-std::expected<Schema, Error> readReflection(Image& image, NameCasing nameCasing) {
-    Reflection reflection(image, nameCasing);
+std::expected<Schema, Error> readReflection(Image& image) {
+    Reflection reflection(image);
     return reflection.read();
 }
 
